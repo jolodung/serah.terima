@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airport Security — QR Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0f1a;
+            --surface: #111827;
+            --border: #1e2d45;
+            --accent: #0ea5e9;
+            --accent2: #22c55e;
+            --text: #e2e8f0;
+            --muted: #64748b;
+            --danger: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Barlow', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            /* Grid background pattern */
+            background-image:
+                linear-gradient(rgba(14,165,233,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(14,165,233,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px 28px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 0 60px rgba(14,165,233,0.08), 0 24px 48px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decorative corner accent */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 80px; height: 80px;
+            border-top: 2px solid var(--accent);
+            border-left: 2px solid var(--accent);
+            border-radius: 20px 0 0 0;
+            opacity: 0.5;
+        }
+        .card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 80px; height: 80px;
+            border-bottom: 2px solid var(--accent2);
+            border-right: 2px solid var(--accent2);
+            border-radius: 0 0 20px 0;
+            opacity: 0.5;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(14,165,233,0.12);
+            border: 1px solid rgba(14,165,233,0.3);
+            color: var(--accent);
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 100px;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            line-height: 1;
+            text-transform: uppercase;
+            color: #fff;
+        }
+
+        h1 span { color: var(--accent); }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        /* Scanner area */
+        #reader-wrapper {
+            background: #000;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        /* Scan line animation */
+        #reader-wrapper::after {
+            content: '';
+            position: absolute;
+            left: 10%; right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            border-radius: 2px;
+            animation: scan 2s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes scan {
+            0% { top: 10%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 90%; opacity: 0; }
+        }
+
+        #reader { width: 100%; }
+
+        /* Override html5-qrcode default styles */
+        #reader__scan_region { background: #000 !important; }
+        #reader__dashboard { background: var(--surface) !important; padding: 12px !important; }
+        #reader__dashboard_section_csr button {
+            background: var(--accent) !important;
+            color: white !important;
+            border: none !important;
+            padding: 8px 18px !important;
+            border-radius: 8px !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            letter-spacing: 1px !important;
+            cursor: pointer !important;
+        }
+        #reader__dashboard_section_swaplink {
+            color: var(--accent) !important;
+            font-family: 'Barlow', sans-serif !important;
+            font-size: 13px !important;
+        }
+        #reader__status_span { color: var(--muted) !important; font-size: 12px !important; }
+        select#reader__camera_selection {
+            background: var(--bg) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 8px !important;
+            padding: 6px 10px !important;
+            font-family: 'Barlow', sans-serif !important;
+            font-size: 13px !important;
+            width: 100% !important;
+            margin-bottom: 8px !important;
+        }
+
+        /* Manual input */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]::placeholder { color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
+        input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,165,233,0.1); }
+
+        .btn-go {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            white-space: nowrap;
+        }
+        .btn-go:hover { background: #0284c7; }
+        .btn-go:active { transform: scale(0.97); }
+
+        /* Status result */
+        #status-box {
+            display: none;
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        #status-box.success {
+            display: flex;
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.3);
+            color: var(--accent2);
+        }
+        #status-box.error {
+            display: flex;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: var(--danger);
+        }
+
+        .status-icon { font-size: 20px; flex-shrink: 0; }
+
+        /* Footer */
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Pulse animation untuk icon */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .scanning { animation: pulse 1.5s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <div class="badge">Airport Security</div>
+        <h1>QR <span>Scanner</span></h1>
+        <p class="subtitle">Scan kode barang untuk membuka detail di sistem</p>
+    </div>
+
+    <div id="status-box">
+        <span class="status-icon" id="status-icon">✓</span>
+        <span id="status-text">QR ditemukan, membuka sistem...</span>
+    </div>
+
+    <div id="reader-wrapper">
+        <div id="reader"></div>
+    </div>
+
+    <div class="divider">atau masukkan manual</div>
+
+    <div class="input-group">
+        <input type="text" id="manual-id" placeholder="Contoh: BRG-20260504-1234">
+        <button class="btn-go" onclick="prosesID(document.getElementById('manual-id').value.trim())">Buka →</button>
+    </div>
+
+    <p class="footer-note">Hasil scan akan membuka tab Apps Script secara otomatis</p>
+</div>
+
+<script>
+    // =====================================================
+    // GANTI URL INI DENGAN URL APPS SCRIPT ANDA
+    // =====================================================
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz-deszgmz8YtKegac_VDboA2zeZDoaoCEjfqrKDurJKCLhI-lKSZa_PPKkKzhPXe9W/exec";
+
+    let scanner = null;
+    let sudahScan = false;
+
+    function tampilkanStatus(tipe, pesan) {
+        const box = document.getElementById('status-box');
+        const icon = document.getElementById('status-icon');
+        const text = document.getElementById('status-text');
+        box.className = 'status-box ' + tipe;
+        icon.textContent = tipe === 'success' ? '✓' : '✗';
+        text.textContent = pesan;
+        box.style.display = 'flex';
+    }
+
+    function prosesID(idBarang) {
+        if (!idBarang) {
+            tampilkanStatus('error', 'ID tidak boleh kosong.');
+            return;
+        }
+        const url = APPS_SCRIPT_URL + "?id=" + encodeURIComponent(idBarang);
+        tampilkanStatus('success', 'Membuka: ' + idBarang + ' ...');
+        setTimeout(() => { window.open(url, '_blank'); }, 800);
+    }
+
+    function onScanSuccess(decodedText) {
+        if (sudahScan) return;
+        sudahScan = true;
+
+        // Hentikan scanner
+        if (scanner) {
+            scanner.clear().catch(() => {});
+        }
+
+        // Ekstrak ID dari URL jika bentuknya link
+        let idBarang = decodedText;
+        try {
+            const url = new URL(decodedText);
+            if (url.searchParams.has('id')) {
+                idBarang = url.searchParams.get('id');
+            }
+        } catch (e) {
+            // Bukan URL, pakai langsung sebagai ID
+            idBarang = decodedText;
+        }
+
+        document.getElementById('manual-id').value = idBarang;
+        prosesID(idBarang);
+    }
+
+    function onScanFailure() {
+        // Dibiarkan kosong — error per-frame normal terjadi
+    }
+
+    // Inisialisasi scanner saat halaman dimuat
+    window.addEventListener('load', function() {
+        scanner = new Html5QrcodeScanner(
+            "reader",
+            { fps: 10, qrbox: { width: 240, height: 240 }, rememberLastUsedCamera: true },
+            false
+        );
+        scanner.render(onScanSuccess, onScanFailure);
+    });
+
+    // Enter key untuk input manual
+    document.getElementById('manual-id').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            prosesID(this.value.trim());
+        }
+    });
+</script>
+
+</body>
+</html>
